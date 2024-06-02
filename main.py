@@ -9,7 +9,7 @@ from pptx.dml.color import RGBColor
 from pptx.util import Inches, Pt
 
 
-# Функция для добавления изображения на слайд как фон
+# Функция для добавления изображения на слайд как фбэкграунд
 def set_background(slide, image_path, prs):
     if not os.path.exists(image_path):
         messagebox.showerror("Ошибка", f"Файл {image_path} не найден.")
