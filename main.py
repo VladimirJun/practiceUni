@@ -1,8 +1,23 @@
+import os
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import ttk
 
 import pandas as pd
 from pptx import Presentation
+from pptx.dml.color import RGBColor
+from pptx.util import Inches, Pt
+
+
+# Функция для добавления изображения на слайд как фон
+def set_background(slide, image_path, prs):
+    if not os.path.exists(image_path):
+        messagebox.showerror("Ошибка", f"Файл {image_path} не найден.")
+        return
+
+    slide_width = prs.slide_width
+    slide_height = prs.slide_height
+    slide.shapes.add_picture(image_path, 0, 0, width=slide_width, height=slide_height)
 
 
 # Функция для создания презентации
@@ -10,35 +25,45 @@ def create_presentation():
     game_class = class_level_var.get()
     if game_class == 1:
         class_column = 'Сложность для 1-4 класса'
-    if game_class == 5:
+    elif game_class == 5:
         class_column = 'Сложность для 5-7 класса'
-    if game_class == 8:
+    elif game_class == 8:
         class_column = 'Сложность для 8-11 класса'
+    else:
+        messagebox.showerror("Ошибка", "Выберите класс.")
+        return
 
-    num_easy_questions = int(num_questions_easy_var.get()) if num_questions_easy_var.get() else 0
-    num_medium_questions = int(num_questions_mid_var.get()) if num_questions_mid_var.get() else 0
-    num_hard_questions = int(num_questions_hard_var.get()) if num_questions_hard_var.get() else 0
+    try:
+        num_easy_questions = int(num_questions_easy_var.get()) if num_questions_easy_var.get() else 0
+        num_medium_questions = int(num_questions_mid_var.get()) if num_questions_mid_var.get() else 0
+        num_hard_questions = int(num_questions_hard_var.get()) if num_questions_hard_var.get() else 0
+    except ValueError:
+        messagebox.showerror("Ошибка", "Введите корректное количество вопросов.")
+        return
 
     excel_file_path = 'database.xlsx'
+    if not os.path.exists(excel_file_path):
+        messagebox.showerror("Ошибка", "Файл database.xlsx не найден.")
+        return
+
     df = pd.read_excel(excel_file_path)
 
     filtered_easy = df[(df[class_column] < 5) & (df[class_column] > 0)]
     filtered_medium = df[(df[class_column] >= 5) & (df[class_column] < 8)]
     filtered_hard = df[df[class_column] >= 8]
 
-    # проерка на достаточность вопросов
+    # проверка на достаточность вопросов
     if len(filtered_easy) < num_easy_questions:
-        print("Не хватает легких вопросов.")
-        exit()
+        messagebox.showerror("Ошибка", "Не хватает легких вопросов.")
+        return
     if len(filtered_medium) < num_medium_questions:
-        print("Не хватает средних вопросов.")
-        exit()
+        messagebox.showerror("Ошибка", "Не хватает средних вопросов.")
+        return
     if len(filtered_hard) < num_hard_questions:
-        print("Не хватает сложных вопросов.")
-        exit()
+        messagebox.showerror("Ошибка", "Не хватает сложных вопросов.")
+        return
 
     # выбираем случайные вопросы
-    # sample выбирает случайные из filtered_easy количеством num_easy_questions
     selected_easy = filtered_easy.sample(n=num_easy_questions)
     selected_medium = filtered_medium.sample(n=num_medium_questions)
     selected_hard = filtered_hard.sample(n=num_hard_questions)
@@ -48,7 +73,15 @@ def create_presentation():
     # перемешиваем все вопросы и сбрасываем старые индексы
     selected_questions = selected_questions.sample(frac=1).reset_index(drop=True)
 
+    # Создаем новую презентацию с измененными размерами слайда
     prs = Presentation()
+    prs.slide_width = Inches(16)  # Ширина слайда
+    prs.slide_height = Inches(9)  # Высота слайда
+
+    # Добавляем первый слайд с фоном
+    first_slide = prs.slides.add_slide(prs.slide_layouts[5])
+    set_background(first_slide, 'first.jpg', prs)
+
     for index, row in selected_questions.iterrows():
         game_title = row['Название игры']
         question = row['Вопрос']
@@ -58,17 +91,23 @@ def create_presentation():
         question_slide = prs.slides.add_slide(prs.slide_layouts[1])
         question_title = question_slide.shapes.title
         question_content = question_slide.placeholders[1]
-        question_title.text = f"{game_title}"
-        question_content.text = f"Вопрос: {question}"
+        question_title.text = f"ВОПРОС {index + 1}"
+        if (index == len(selected_questions) - 1):
+            question_title.text = f"ВОПРОС {index + 1} (ПОСЛЕДНИЙ)"
+        question_content.text = f"{question}"
 
         # Создаем слайд с ответом
-        answer_slide = prs.slides.add_slide(prs.slide_layouts[1])
-        answer_title = answer_slide.shapes.title
-        answer_content = answer_slide.placeholders[1]
-        answer_content.text = f"Ответ: {answer}"
+        answer_slide = prs.slides.add_slide(prs.slide_layouts[5])
+        set_background(answer_slide, 'answer.jpg', prs)
+        textbox = answer_slide.shapes.add_textbox(Inches(3), Inches(3), Inches(14), Inches(7))
+        text_frame = textbox.text_frame
+        p = text_frame.add_paragraph()
+        p.text = f"\n\n\n\t\t\t\t\t{answer}"
+        p.font.size = Pt(4000)
+        p.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
 
     prs.save('output_presentation.pptx')
-
+    messagebox.showinfo("Успех", "Презентация успешно создана!")
 
 # Создание окна приложения
 root = tk.Tk()
