@@ -87,14 +87,20 @@ def create_presentation():
         question = row['Вопрос']
         answer = row['Ответ']
 
-        # Создаем слайд с вопросом
-        question_slide = prs.slides.add_slide(prs.slide_layouts[1])
-        question_title = question_slide.shapes.title
-        question_content = question_slide.placeholders[1]
-        question_title.text = f"ВОПРОС {index + 1}"
-        if (index == len(selected_questions) - 1):
-            question_title.text = f"ВОПРОС {index + 1} (ПОСЛЕДНИЙ)"
-        question_content.text = f"{question}"
+        question_slide = prs.slides.add_slide(prs.slide_layouts[5])
+        set_background(question_slide, 'question.png', prs)
+
+        # Добавляем заголовок и текст вопроса поверх фонового изображения
+        textbox = question_slide.shapes.add_textbox(Inches(2), Inches(1), Inches(12), Inches(7))
+        text_frame = textbox.text_frame
+        p = text_frame.add_paragraph()
+        p.text = f"\n\n\t\t{question}"
+        p.font.size = Pt(28)
+
+        text_frame.fit_text(font_family='Arial', max_size=28, bold=False, italic=False, font_file=None)  # Автоматически подгоняем текст
+
+        p.font.color.rgb = RGBColor(0x00, 0x00, 0x00)  # Черный цвет текста
+
 
 # Создаем слайд с ответом
         answer_slide = prs.slides.add_slide(prs.slide_layouts[5])
@@ -102,8 +108,10 @@ def create_presentation():
         textbox = answer_slide.shapes.add_textbox(Inches(3), Inches(3), Inches(14), Inches(7))
         text_frame = textbox.text_frame
         p = text_frame.add_paragraph()
-        p.font.size = Pt(45)
-        p.text = f"\n\t\t\t{answer}"
+        p.text = f"\n\t\t{answer}"
+        text_frame.fit_text(font_family='Arial', max_size=36, bold=False, italic=False,
+                            font_file=None)
+
         p.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
 
     prs.save('output_presentation.pptx')
