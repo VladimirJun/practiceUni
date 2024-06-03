@@ -96,14 +96,14 @@ def create_presentation():
             question_title.text = f"ВОПРОС {index + 1} (ПОСЛЕДНИЙ)"
         question_content.text = f"{question}"
 
-        # Создаем слайд с ответом
+# Создаем слайд с ответом
         answer_slide = prs.slides.add_slide(prs.slide_layouts[5])
         set_background(answer_slide, 'answer.jpg', prs)
         textbox = answer_slide.shapes.add_textbox(Inches(3), Inches(3), Inches(14), Inches(7))
         text_frame = textbox.text_frame
         p = text_frame.add_paragraph()
-        p.text = f"\n\n\n\t\t\t\t\t{answer}"
-        p.font.size = Pt(4000)
+        p.font.size = Pt(45)
+        p.text = f"\n\t\t\t{answer}"
         p.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
 
     prs.save('output_presentation.pptx')
